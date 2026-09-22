@@ -93,6 +93,13 @@ export interface TripExpense {
   createdAt: string;
 }
 
+export interface TripMember {
+  id: string;
+  name: string;
+  avatarColor?: string;
+  createdAt?: string;
+}
+
 export interface Trip {
   id: string;
   title: string;
@@ -102,6 +109,23 @@ export interface Trip {
   coverImage: string;
   participants: string[];
   currentUser: string;
+  
+  // Hotel / Hospedagem
+  hotelName?: string;
+  hotelAddress?: string;
+  hotelCheckin?: string;
+  hotelCheckout?: string;
+  hotelNotes?: string;
+  hotelLat?: number;
+  hotelLng?: number;
+
+  // Voos & Aeroportos
+  arrivalAirport?: string;
+  arrivalDateTime?: string;
+  arrivalFlight?: string;
+  departureAirport?: string;
+  departureDateTime?: string;
+  departureFlight?: string;
 }
 
 export interface SPTransportLine {
@@ -113,3 +137,4 @@ export interface SPTransportLine {
   stationsCount: number;
   highlights: string[];
 }
+

@@ -23,6 +23,7 @@ interface NavbarProps {
   setActiveTab: (tab: TabType) => void;
   onOpenAddPlace: () => void;
   onOpenSettings: () => void;
+  onOpenUserSelect: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -30,21 +31,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   onOpenAddPlace,
   onOpenSettings,
+  onOpenUserSelect,
 }) => {
   const { trip, currentUser, setCurrentUser, addParticipant, isSupabaseConnected } = useTrip();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [newUserName, setNewUserName] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
-
-  const handleAddUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newUserName.trim()) {
-      addParticipant(newUserName.trim());
-      setCurrentUser(newUserName.trim());
-      setNewUserName('');
-      setShowUserMenu(false);
-    }
-  };
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -60,14 +50,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Logo & Trip Title */}
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center shadow-md shadow-orange-500/20 text-white font-black text-xl">
-              SP
+              CB
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h1 className="text-lg font-bold text-white tracking-tight flex items-center gap-1.5">
-                  SampaTrip
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-semibold border border-orange-500/30">
-                    São Paulo
+                <h1 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5">
+                  Chico Bento SP
+                  <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-semibold border border-orange-500/30">
+                    São Paulo 🏙️
                   </span>
                 </h1>
               </div>
@@ -156,70 +146,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {/* User Profile Selector (Simulates Multi-user Collaboration) */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-2 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 transition-colors"
-                title="Trocar usuário para votar ou comentar"
-              >
-                <div className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs font-bold uppercase">
-                  {currentUser.slice(0, 1)}
-                </div>
-                <span className="hidden md:inline font-medium">{currentUser}</span>
-              </button>
-
-              {/* User Dropdown Modal */}
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-3 z-50 text-slate-100 animate-in fade-in zoom-in duration-150">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
-                    Viajando como:
-                  </p>
-                  <div className="space-y-1 mb-3">
-                    {trip.participants.map(name => (
-                      <button
-                        key={name}
-                        onClick={() => {
-                          setCurrentUser(name);
-                          setShowUserMenu(false);
-                        }}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left transition-colors ${
-                          name === currentUser
-                            ? 'bg-orange-500/20 text-orange-300 font-bold border border-orange-500/30'
-                            : 'hover:bg-slate-700 text-slate-300'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-slate-600 flex items-center justify-center text-[10px] uppercase font-bold text-slate-100">
-                            {name[0]}
-                          </span>
-                          {name}
-                        </span>
-                        {name === currentUser && <CheckCircle2 className="w-3.5 h-3.5 text-orange-400" />}
-                      </button>
-                    ))}
-                  </div>
-
-                  <form onSubmit={handleAddUser} className="pt-2 border-t border-slate-700">
-                    <p className="text-[11px] text-slate-400 mb-1.5 px-1 font-medium">Novo integrante do grupo:</p>
-                    <div className="flex gap-1.5">
-                      <input
-                        type="text"
-                        placeholder="Nome..."
-                        value={newUserName}
-                        onChange={e => setNewUserName(e.target.value)}
-                        className="w-full px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
-                      />
-                      <button
-                        type="submit"
-                        className="px-2 py-1 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-bold"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
+            <button
+              onClick={onOpenUserSelect}
+              className={`flex items-center space-x-2 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                currentUser
+                  ? 'bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200'
+                  : 'bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/50 text-orange-300 animate-pulse'
+              }`}
+              title="Trocar ou editar integrante do grupo"
+            >
+              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 text-white flex items-center justify-center text-xs font-bold uppercase shadow-sm">
+                {currentUser ? currentUser.slice(0, 1) : '?'}
+              </div>
+              <span className="hidden md:inline font-medium">
+                {currentUser ? currentUser : 'Quem é você?'}
+              </span>
+            </button>
 
             {/* Share / Copy Link Button */}
             <button

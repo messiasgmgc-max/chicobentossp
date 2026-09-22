@@ -44,7 +44,7 @@ const SP_NEIGHBORHOODS: { name: string; lat: number; lng: number }[] = [
 ];
 
 export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose }) => {
-  const { addPlace } = useTrip();
+  const { addPlace, currentUser } = useTrip();
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState<PlaceCategory>('gastronomia');
@@ -94,7 +94,7 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
       metroStation: metroStation.trim() || undefined,
       metroLine: metroStation.trim() ? metroLine : undefined,
       status: 'wishlist',
-      createdBy: 'Você',
+      createdBy: currentUser || 'Viajante',
     });
 
     onClose();

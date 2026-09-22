@@ -9,6 +9,7 @@ import { GoogleMapView } from './components/map/GoogleMapView';
 import { TransitGuide } from './components/transit/TransitGuide';
 import { NotesHub } from './components/notes/NotesHub';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { UserSelectModal } from './components/auth/UserSelectModal';
 import { Place } from './types';
 import {
   Sparkles,
@@ -22,21 +23,24 @@ import {
 } from 'lucide-react';
 
 const AppContent: React.FC = () => {
-  const { trip, places, itineraryDays } = useTrip();
+  const { trip, places, itineraryDays, currentUser } = useTrip();
 
   const [activeTab, setActiveTab] = useState<TabType>('itinerary');
   const [selectedPlaceForDetails, setSelectedPlaceForDetails] = useState<Place | null>(null);
   const [isAddPlaceModalOpen, setIsAddPlaceModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isUserSelectModalOpen, setIsUserSelectModalOpen] = useState(false);
 
   const handleOpenPlaceDetails = (place: Place) => {
     setSelectedPlaceForDetails(place);
   };
 
   const handleQuickAddToDay = (place: Place) => {
-    // Open place details modal where the user can pick the day and add
     setSelectedPlaceForDetails(place);
   };
+
+  // Show user select modal automatically if currentUser is empty
+  const shouldShowUserSelectModal = !currentUser || isUserSelectModalOpen;
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col selection:bg-orange-500 selection:text-white pb-16 md:pb-8">
@@ -46,6 +50,7 @@ const AppContent: React.FC = () => {
         setActiveTab={setActiveTab}
         onOpenAddPlace={() => setIsAddPlaceModalOpen(true)}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenUserSelect={() => setIsUserSelectModalOpen(true)}
       />
 
       {/* Main Tab Content View */}
@@ -74,6 +79,13 @@ const AppContent: React.FC = () => {
         {activeTab === 'notes' && <NotesHub />}
       </main>
 
+      {/* User Selection & Profile Modal (Startup + On Demand) */}
+      <UserSelectModal
+        isOpen={shouldShowUserSelectModal}
+        onClose={() => setIsUserSelectModalOpen(false)}
+        canDismiss={Boolean(currentUser)}
+      />
+
       {/* Place Details Modal */}
       <PlaceDetailsModal
         place={selectedPlaceForDetails}
@@ -97,10 +109,10 @@ const AppContent: React.FC = () => {
       {/* Footer */}
       <footer className="mt-12 border-t border-slate-800/80 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
         <p className="flex items-center justify-center gap-1">
-          Feito com <Heart className="w-3.5 h-3.5 text-orange-500 fill-orange-500 inline" /> para nossa viagem inesquecível a São Paulo 🏙️
+          Feito com <Heart className="w-3.5 h-3.5 text-orange-500 fill-orange-500 inline" /> para nossa viagem inesquecível - Chico Bento SP 🏙️
         </p>
         <p className="text-[11px] text-slate-600 mt-1">
-          SampaTrip • Integração Google Maps & Supabase
+          Chico Bento SP • Integração Google Maps & Supabase
         </p>
       </footer>
     </div>

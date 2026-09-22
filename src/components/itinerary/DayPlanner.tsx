@@ -22,6 +22,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 
+import { TripLogisticsCard } from '../logistics/TripLogisticsCard';
+
 interface DayPlannerProps {
   onOpenCreateNewPlace: () => void;
   onSelectPlaceForDetails: (place: Place) => void;
@@ -53,9 +55,9 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
   const [tempNotes, setTempNotes] = useState('');
   const [isAddingNewDay, setIsAddingNewDay] = useState(false);
   const [newDayTitle, setNewDayTitle] = useState('');
-  const [newDayDate, setNewDayDate] = useState('');
+  const [newDayDate, setNewDayDate] = useState(trip.startDate || '');
 
-  // Fallback to first day if active day was deleted
+  // Fallback to first day if active day was deleted or changed
   const currentDay = itineraryDays.find(d => d.id === activeDayId) || itineraryDays[0];
 
   // Resolve items with place details
@@ -105,10 +107,9 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
   const handleCreateDay = (e: React.FormEvent) => {
     e.preventDefault();
     if (newDayTitle.trim()) {
-      const dayDate = newDayDate || new Date().toISOString().split('T')[0];
+      const dayDate = newDayDate || trip.startDate || new Date().toISOString().split('T')[0];
       addDay(newDayTitle.trim(), dayDate);
       setNewDayTitle('');
-      setNewDayDate('');
       setIsAddingNewDay(false);
       triggerCelebration();
     }
@@ -122,7 +123,10 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-4 sm:px-6 py-6 animate-in fade-in duration-200">
       
-      {/* Day Selector Header & Action Bar */}
+      {/* 1. Trip Logistics: Hotel & Flights */}
+      <TripLogisticsCard />
+
+      {/* 2. Day Selector Header & Action Bar */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
           <div>
@@ -231,7 +235,24 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
       </div>
 
       {/* Itinerary Timeline */}
-      {currentDay && (
+      {itineraryDays.length === 0 ? (
+        <div className="bg-slate-900/60 border border-dashed border-slate-800 rounded-3xl p-10 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center mx-auto mb-4">
+            <Calendar className="w-7 h-7" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-1">Nenhum dia de roteiro criado ainda</h3>
+          <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">
+            Vamos começar do zero! Defina os dias da viagem para organizar os pontos turísticos, restaurantes e horários.
+          </p>
+          <button
+            onClick={() => setIsAddingNewDay(true)}
+            className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-orange-500/25 inline-flex items-center gap-2 transition-transform active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            Criar Primeiro Dia da Viagem
+          </button>
+        </div>
+      ) : currentDay ? (
         <div className="space-y-3">
           
           {populatedItems.length === 0 ? (
@@ -241,7 +262,7 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
               </div>
               <h3 className="text-lg font-bold text-white mb-1">Nenhum ponto adicionado para este dia</h3>
               <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">
-                Comece adicionando os melhores pontos de São Paulo do nosso catálogo ou crie suas próprias paradas.
+                Comece adicionando lugares e paradas para este dia com horários e notas.
               </p>
               <button
                 onClick={() => setIsAddStopOpen(true)}
@@ -432,7 +453,7 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
           </div>
 
         </div>
-      )}
+      ) : null}
 
       {/* Add Stop Modal */}
       {currentDay && (
