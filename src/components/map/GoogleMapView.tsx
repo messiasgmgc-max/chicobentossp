@@ -54,11 +54,11 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // CARTO Basemaps with API key
+      // CARTO Basemaps with API key (using official `?key=` parameter)
       const cartoApiKey = 'cb1_3u2s_1_a13452781362f0061b399cfd';
-      L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=${cartoApiKey}`, {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
+      L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${cartoApiKey}`, {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 20,
         subdomains: 'abcd',
       }).addTo(map);
 
