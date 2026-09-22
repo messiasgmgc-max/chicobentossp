@@ -126,7 +126,7 @@ export const NotesHub: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* Header Banner & SubTab switcher */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">

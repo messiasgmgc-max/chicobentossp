@@ -1,21 +1,32 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
-    background-color: #0f172a;
+  html, body {
+    background-color: #020617;
     color: #f8fafc;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
+}
+
+/* Safe area padding utilities for modern iOS and Android navigation bars */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
 }
 
 /* Custom modern scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #020617;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -27,12 +38,22 @@
   background: #f97316;
 }
 
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Custom leaflet map adjustments */
 .leaflet-container {
   width: 100%;
   height: 100%;
   background-color: #0b0f19 !important;
   font-family: inherit;
+  z-index: 10 !important;
 }
 
 .custom-map-pin {

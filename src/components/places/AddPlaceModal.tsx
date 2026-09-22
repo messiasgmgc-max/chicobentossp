@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { useTrip } from '../../context/TripContext';
-import { PlaceCategory, PlaceStatus } from '../../types';
+import { PlaceCategory } from '../../types';
 import {
   X,
   Plus,
-  MapPin,
-  Train,
-  Clock,
-  DollarSign,
-  Tag,
-  Image as ImageIcon,
   Sparkles
 } from 'lucide-react';
 
@@ -101,30 +95,30 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-      <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
-          <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-orange-500" />
-              Sugerir Novo Local em São Paulo
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800 bg-slate-950/60 shrink-0">
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 truncate">
+              <Sparkles className="w-5 h-5 text-orange-500 shrink-0" />
+              Sugerir Novo Local em SP
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Adicione ao catálogo para o grupo avaliar, votar e planejar
+            <p className="text-[11px] sm:text-xs text-slate-400 truncate">
+              Adicione ao catálogo para o grupo avaliar e votar
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 sm:space-y-4">
           
           {/* Place Name */}
           <div>
@@ -137,12 +131,12 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
               placeholder="Ex: Bar dos Arcos, Casa de Francisca, Parque Villa-Lobos..."
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
             />
           </div>
 
           {/* Category & Neighborhood */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1">
                 Categoria
@@ -150,7 +144,7 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value as PlaceCategory)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 capitalize"
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 capitalize"
               >
                 <option value="cultura">Cultura & Museus</option>
                 <option value="gastronomia">Gastronomia & Restaurantes</option>
@@ -169,7 +163,7 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
               <select
                 value={neighborhood}
                 onChange={e => setNeighborhood(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
               >
                 {SP_NEIGHBORHOODS.map(n => (
                   <option key={n.name} value={n.name}>
@@ -190,26 +184,26 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
               placeholder="Ex: Rua Medeiros de Albuquerque, 82"
               value={address}
               onChange={e => setAddress(e.target.value)}
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
             />
           </div>
 
           {/* Description */}
           <div>
             <label className="block text-xs font-bold text-slate-300 mb-1">
-              Descrição / Por que ir?
+              Descrição / Dica
             </label>
             <textarea
               placeholder="Conta para o grupo o que tem de especial lá..."
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={2}
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 resize-none"
+              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 resize-none"
             />
           </div>
 
           {/* Metro Station & Metro Line */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1">
                 Estação de Metrô Próxima
@@ -219,7 +213,7 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
                 placeholder="Ex: Estação Fradique Coutinho"
                 value={metroStation}
                 onChange={e => setMetroStation(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
               />
             </div>
 
@@ -230,7 +224,7 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
               <select
                 value={metroLine}
                 onChange={e => setMetroLine(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
               >
                 <option value="Linha 1-Azul">Linha 1 - Azul</option>
                 <option value="Linha 2-Verde">Linha 2 - Verde</option>
@@ -243,26 +237,26 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
           </div>
 
           {/* Price, Duration, Rating */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                Preço Médio
+              <label className="block text-[10px] sm:text-[11px] font-bold text-slate-300 mb-1">
+                Preço
               </label>
               <select
                 value={priceLevel}
                 onChange={e => setPriceLevel(Number(e.target.value) as any)}
-                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-2 py-2 bg-slate-950 border border-slate-700 rounded-xl text-[11px] sm:text-xs text-white focus:outline-none focus:border-orange-500"
               >
-                <option value={1}>$ (Barato / Grátis)</option>
-                <option value={2}>$$ (Médio)</option>
-                <option value={3}>$$$ (Sofisticado)</option>
-                <option value={4}>$$$$ (Gourmet)</option>
+                <option value={1}>$ Barato</option>
+                <option value={2}>$$ Médio</option>
+                <option value={3}>$$$ Caro</option>
+                <option value={4}>$$$$ Luxo</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                Tempo (minutos)
+              <label className="block text-[10px] sm:text-[11px] font-bold text-slate-300 mb-1">
+                Tempo (min)
               </label>
               <input
                 type="number"
@@ -270,13 +264,13 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
                 step="15"
                 value={estimatedTimeMins}
                 onChange={e => setEstimatedTimeMins(Number(e.target.value))}
-                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-2 py-2 bg-slate-950 border border-slate-700 rounded-xl text-[11px] sm:text-xs text-white focus:outline-none focus:border-orange-500"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 mb-1">
-                Avaliação (1-5)
+              <label className="block text-[10px] sm:text-[11px] font-bold text-slate-300 mb-1">
+                Nota (1-5)
               </label>
               <input
                 type="number"
@@ -285,13 +279,13 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
                 step="0.1"
                 value={rating}
                 onChange={e => setRating(Number(e.target.value))}
-                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+                className="w-full px-2 py-2 bg-slate-950 border border-slate-700 rounded-xl text-[11px] sm:text-xs text-white focus:outline-none focus:border-orange-500"
               />
             </div>
           </div>
 
           {/* Tags & Photo URL */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1">
                 Tags (separadas por vírgula)
@@ -301,7 +295,7 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
                 placeholder="Fotos, Drinks, Feira, Chopp..."
                 value={tagsInput}
                 onChange={e => setTagsInput(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
               />
             </div>
 
@@ -314,13 +308,13 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
                 placeholder="https://..."
                 value={photoUrl}
                 onChange={e => setPhotoUrl(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
               />
             </div>
           </div>
 
           {/* Submit Button */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
@@ -330,10 +324,10 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-500/25 transition-transform active:scale-95 flex items-center gap-1.5"
+              className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-orange-500/25 transition-transform active:scale-95 flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" />
-              Salvar Sugestão
+              <span>Salvar Sugestão</span>
             </button>
           </div>
 

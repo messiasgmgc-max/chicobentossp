@@ -11,19 +11,10 @@ import { NotesHub } from './components/notes/NotesHub';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { UserSelectModal } from './components/auth/UserSelectModal';
 import { Place } from './types';
-import {
-  Sparkles,
-  Calendar,
-  Compass,
-  Map,
-  Train,
-  FileText,
-  MapPin,
-  Heart
-} from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 const AppContent: React.FC = () => {
-  const { trip, places, itineraryDays, currentUser } = useTrip();
+  const { currentUser } = useTrip();
 
   const [activeTab, setActiveTab] = useState<TabType>('itinerary');
   const [selectedPlaceForDetails, setSelectedPlaceForDetails] = useState<Place | null>(null);
@@ -43,8 +34,8 @@ const AppContent: React.FC = () => {
   const shouldShowUserSelectModal = !currentUser || isUserSelectModalOpen;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col selection:bg-orange-500 selection:text-white pb-16 md:pb-8">
-      {/* Top Navbar */}
+    <div className="min-h-screen bg-slate-950 flex flex-col selection:bg-orange-500 selection:text-white pb-28 md:pb-12 overflow-x-hidden">
+      {/* Top Navbar & Fixed Mobile Bottom Nav */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -54,7 +45,7 @@ const AppContent: React.FC = () => {
       />
 
       {/* Main Tab Content View */}
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         {activeTab === 'itinerary' && (
           <DayPlanner
             onOpenCreateNewPlace={() => setIsAddPlaceModalOpen(true)}
@@ -107,9 +98,9 @@ const AppContent: React.FC = () => {
       />
 
       {/* Footer */}
-      <footer className="mt-12 border-t border-slate-800/80 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
+      <footer className="mt-8 mb-4 border-t border-slate-800/60 bg-slate-950/40 py-6 text-center text-xs text-slate-500">
         <p className="flex items-center justify-center gap-1">
-          Feito com <Heart className="w-3.5 h-3.5 text-orange-500 fill-orange-500 inline" /> para nossa viagem inesquecível - Chico Bento SP 🏙️
+          Feito com <Heart className="w-3.5 h-3.5 text-orange-500 fill-orange-500 inline" /> para nossa viagem - Chico Bento SP 🏙️
         </p>
         <p className="text-[11px] text-slate-600 mt-1">
           Chico Bento SP • Integração Google Maps & Supabase
