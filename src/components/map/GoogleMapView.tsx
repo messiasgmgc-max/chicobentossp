@@ -54,10 +54,12 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // Dark Mode / Clean Tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      // CARTO Basemaps with API key
+      const cartoApiKey = 'cb1_3u2s_1_a13452781362f0061b399cfd';
+      L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=${cartoApiKey}`, {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
+        subdomains: 'abcd',
       }).addTo(map);
 
       const markersLayer = L.layerGroup().addTo(map);
