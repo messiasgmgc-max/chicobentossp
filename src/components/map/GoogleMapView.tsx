@@ -98,7 +98,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
       const markerHtml = `
         <div class="relative flex items-center justify-center cursor-pointer group">
           <div class="w-8 h-8 rounded-2xl ${
-            isDayRoute ? 'bg-orange-600 ring-4 ring-orange-400/30' : 'bg-slate-900 ring-2 ring-slate-700'
+            isDayRoute ? 'bg-blue-600 ring-4 ring-blue-400/30' : 'bg-slate-900 ring-2 ring-slate-700'
           } text-white flex items-center justify-center shadow-xl font-bold text-xs transform hover:scale-110 transition-transform">
             ${order !== undefined ? order : '📍'}
           </div>
@@ -172,7 +172,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
       {/* Map Header & Filter Controls */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <span className="text-[11px] sm:text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-[11px] sm:text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
             <Navigation className="w-3.5 h-3.5" />
             Mapa Interativo & Rotas de SP
           </span>
@@ -190,7 +190,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 active:scale-95 ${
               selectedDayId === 'all'
-                ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
@@ -206,7 +206,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 shrink-0 active:scale-95 ${
                 selectedDayId === day.id
-                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
@@ -242,10 +242,10 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
           <div className="absolute top-4 left-4 z-10 max-w-xs w-full bg-slate-900/90 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl p-3.5 hidden sm:block">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
               <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-orange-400" />
+                <Calendar className="w-3.5 h-3.5 text-blue-400" />
                 {currentDay.title}
               </h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
                 {displayedPlaces.length} paradas
               </span>
             </div>
@@ -257,11 +257,11 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
                   onClick={() => setSelectedPlace(place)}
                   className={`p-2 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-colors ${
                     selectedPlace?.id === place.id
-                      ? 'bg-orange-500/20 text-white border border-orange-500/40'
+                      ? 'bg-blue-500/20 text-white border border-blue-500/40'
                       : 'hover:bg-slate-800 text-slate-300'
                   }`}
                 >
-                  <span className="w-5 h-5 rounded-lg bg-orange-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-lg bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
                     {order}
                   </span>
                   <div className="min-w-0">
@@ -290,7 +290,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
                   </span>
                   <h3 className="text-xs sm:text-sm font-bold text-white mt-1 truncate">{selectedPlace.name}</h3>
                   <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5 truncate">
-                    <MapPin className="w-3 h-3 text-orange-400 shrink-0" />
+                    <MapPin className="w-3 h-3 text-blue-400 shrink-0" />
                     <span>{selectedPlace.neighborhood}</span>
                   </p>
                   {selectedPlace.metroStation && (
@@ -335,7 +335,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({ onSelectPlace }) =
 
                 <button
                   onClick={() => onSelectPlace(selectedPlace)}
-                  className="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-[11px] font-bold shadow-md transition-colors active:scale-95"
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[11px] font-semibold shadow-md transition-colors active:scale-95"
                 >
                   Detalhes
                 </button>

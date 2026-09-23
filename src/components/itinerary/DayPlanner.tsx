@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useTrip } from '../../context/TripContext';
-import { ItineraryItem, Place } from '../../types';
+import { ItineraryItem, TransitMode, Place } from '../../types';
 import { TransitBadge } from './TransitBadge';
 import { AddStopModal } from './AddStopModal';
+import { TripLogisticsCard } from '../logistics/TripLogisticsCard';
 import {
   Calendar,
   Clock,
@@ -14,11 +15,14 @@ import {
   Navigation,
   ExternalLink,
   Train,
+  CheckCircle2,
+  Share2,
   Sparkles,
-  Edit2
+  Edit2,
+  Layers,
+  ArrowRight,
+  X
 } from 'lucide-react';
-
-import { TripLogisticsCard } from '../logistics/TripLogisticsCard';
 
 interface DayPlannerProps {
   onOpenCreateNewPlace: () => void;
@@ -35,9 +39,11 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
     itineraryDays,
     addDay,
     deleteDay,
+    updateDay,
     removeItemFromDay,
     reorderDayItems,
     updateItineraryItem,
+    changePlaceStatus,
     triggerCelebration,
   } = useTrip();
 
@@ -47,9 +53,12 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
   const [isAddStopOpen, setIsAddStopOpen] = useState(false);
   const [editingNotesItemId, setEditingNotesItemId] = useState<string | null>(null);
   const [tempNotes, setTempNotes] = useState('');
+  
+  // Clean New Day Modal State
   const [isAddingNewDay, setIsAddingNewDay] = useState(false);
   const [newDayTitle, setNewDayTitle] = useState('');
   const [newDayDate, setNewDayDate] = useState(trip.startDate || '');
+  const [newDayDescription, setNewDayDescription] = useState('');
 
   // Fallback to first day if active day was deleted or changed
   const currentDay = itineraryDays.find(d => d.id === activeDayId) || itineraryDays[0];
@@ -102,8 +111,9 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
     e.preventDefault();
     if (newDayTitle.trim()) {
       const dayDate = newDayDate || trip.startDate || new Date().toISOString().split('T')[0];
-      addDay(newDayTitle.trim(), dayDate);
+      addDay(newDayTitle.trim(), dayDate, newDayDescription.trim() || undefined);
       setNewDayTitle('');
+      setNewDayDescription('');
       setIsAddingNewDay(false);
       triggerCelebration();
     }
@@ -115,30 +125,30 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto animate-in fade-in duration-200">
+    <div className="space-y-5 max-w-5xl mx-auto pb-4 animate-in fade-in duration-150">
       
       {/* 1. Trip Logistics: Hotel & Flights */}
       <TripLogisticsCard />
 
       {/* 2. Day Selector Header & Action Bar */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 border-b border-slate-800 pb-4 sm:pb-5">
-          <div>
-            <span className="text-[11px] sm:text-xs font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Planejador de Roteiro Inteligente
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="min-w-0">
+            <span className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              Roteiro da Viagem
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-white mt-1 leading-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mt-0.5 truncate">
               {currentDay?.title || 'Roteiro de São Paulo'}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-0.5 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
               <span>
                 {currentDay?.date
                   ? new Date(currentDay.date + 'T00:00:00').toLocaleDateString('pt-BR', {
-                      weekday: 'short',
+                      weekday: 'long',
                       day: 'numeric',
-                      month: 'short',
+                      month: 'long',
                     })
                   : 'Data a definir'}
               </span>
@@ -146,16 +156,16 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
           </div>
 
           {/* Quick Metrics & Google Maps Multi-stop Route Button */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-            <div className="bg-slate-950/70 border border-slate-800 px-3 py-2 rounded-2xl flex items-center justify-around sm:justify-start gap-3 sm:gap-4 text-xs font-medium">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="bg-slate-950/70 border border-slate-800 px-3 py-2 rounded-xl flex items-center gap-3 text-xs font-medium">
               <div>
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">Paradas</span>
+                <span className="text-slate-500 block text-[10px] uppercase font-semibold">Paradas</span>
                 <span className="text-white font-mono text-sm font-bold">{populatedItems.length}</span>
               </div>
               <div className="w-px h-6 bg-slate-800"></div>
               <div>
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">Duração Estimada</span>
-                <span className="text-orange-400 font-mono text-sm font-bold">~{totalEstimatedHours}h</span>
+                <span className="text-slate-500 block text-[10px] uppercase font-semibold">Duração</span>
+                <span className="text-blue-400 font-mono text-sm font-bold">~{totalEstimatedHours}h</span>
               </div>
             </div>
 
@@ -164,10 +174,10 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
                 href={generateGoogleMapsRouteUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all shrink-0"
+                className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm active:scale-95 transition-all shrink-0"
               >
                 <Navigation className="w-4 h-4 shrink-0" />
-                <span>Navegar Rota no Google Maps</span>
+                <span>Navegar Rota no Maps</span>
                 <ExternalLink className="w-3.5 h-3.5 opacity-80 shrink-0" />
               </a>
             )}
@@ -180,69 +190,43 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
             <button
               key={day.id}
               onClick={() => setActiveDayId(day.id)}
-              className={`px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-bold shrink-0 transition-all flex items-center gap-1.5 active:scale-95 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5 active:scale-95 ${
                 currentDay?.id === day.id
-                  ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/60'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60'
               }`}
             >
               <span>Dia {day.dayNumber}</span>
-              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${currentDay?.id === day.id ? 'bg-orange-600/60 text-white' : 'bg-slate-700/70 text-slate-400'}`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${currentDay?.id === day.id ? 'bg-blue-700 text-white' : 'bg-slate-700 text-slate-400'}`}>
                 {day.items.length}
               </span>
             </button>
           ))}
 
-          {/* Add New Day Button */}
-          {!isAddingNewDay ? (
-            <button
-              onClick={() => setIsAddingNewDay(true)}
-              className="px-3 py-2 rounded-2xl border border-dashed border-slate-700 hover:border-orange-500/60 text-slate-400 hover:text-orange-400 text-xs font-semibold shrink-0 transition-colors flex items-center gap-1 active:scale-95"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Novo Dia</span>
-            </button>
-          ) : (
-            <form onSubmit={handleCreateDay} className="flex items-center gap-1.5 shrink-0 bg-slate-800 p-1.5 rounded-2xl border border-orange-500/40">
-              <input
-                type="text"
-                placeholder="Ex: Dia 5: Parques..."
-                value={newDayTitle}
-                onChange={e => setNewDayTitle(e.target.value)}
-                className="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 w-36 sm:w-48"
-                autoFocus
-              />
-              <button
-                type="submit"
-                className="px-3 py-1 bg-orange-500 text-white rounded-xl text-xs font-bold hover:bg-orange-600"
-              >
-                Salvar
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsAddingNewDay(false)}
-                className="px-2 py-1 text-slate-400 hover:text-white text-xs"
-              >
-                ✕
-              </button>
-            </form>
-          )}
+          {/* Clean Add New Day Trigger */}
+          <button
+            onClick={() => setIsAddingNewDay(true)}
+            className="px-3 py-2 rounded-xl border border-dashed border-slate-700 hover:border-blue-500/60 text-slate-400 hover:text-blue-400 text-xs font-medium shrink-0 transition-colors flex items-center gap-1 active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Novo Dia</span>
+          </button>
         </div>
       </div>
 
       {/* Itinerary Timeline */}
       {itineraryDays.length === 0 ? (
-        <div className="bg-slate-900/60 border border-dashed border-slate-800 rounded-3xl p-8 sm:p-10 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center mx-auto mb-3">
+        <div className="bg-slate-900 border border-dashed border-slate-800 rounded-2xl p-8 sm:p-12 text-center">
+          <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-3">
             <Calendar className="w-6 h-6" />
           </div>
-          <h3 className="text-base sm:text-lg font-bold text-white mb-1">Nenhum dia criado ainda</h3>
-          <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mb-5">
-            Defina os dias da viagem para organizar os pontos turísticos e horários.
+          <h3 className="text-base font-bold text-white mb-1">Nenhum dia cadastrado ainda</h3>
+          <p className="text-xs sm:text-sm text-slate-400 max-w-sm mx-auto mb-5">
+            Comece definindo os dias da viagem para organizar os passeios, restaurantes e horários.
           </p>
           <button
             onClick={() => setIsAddingNewDay(true)}
-            className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/25 inline-flex items-center gap-2 transition-transform active:scale-95"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-md inline-flex items-center gap-2 transition-transform active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Criar Primeiro Dia da Viagem
@@ -252,24 +236,24 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
         <div className="space-y-3">
           
           {populatedItems.length === 0 ? (
-            <div className="bg-slate-900/60 border border-dashed border-slate-800 rounded-3xl p-8 sm:p-12 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center mx-auto mb-3">
+            <div className="bg-slate-900 border border-dashed border-slate-800 rounded-2xl p-8 sm:p-10 text-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-3">
                 <MapPin className="w-6 h-6" />
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-white mb-1">Nenhuma parada para este dia</h3>
-              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mb-5">
-                Adicione lugares e paradas para este dia com horários e notas.
+              <h3 className="text-base font-bold text-white mb-1">Nenhum ponto adicionado para este dia</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto mb-5">
+                Adicione locais do catálogo ou cadastre novas paradas com horários e notas.
               </p>
               <button
                 onClick={() => setIsAddStopOpen(true)}
-                className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/25 inline-flex items-center gap-2 transition-transform active:scale-95"
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-md inline-flex items-center gap-2 transition-transform active:scale-95"
               >
                 <Plus className="w-4 h-4" />
-                Adicionar Parada
+                Adicionar Primeira Parada
               </button>
             </div>
           ) : (
-            <div className="relative space-y-2">
+            <div className="space-y-2.5">
               {populatedItems.map((item, index) => {
                 const place = item.place;
                 const isLast = index === populatedItems.length - 1;
@@ -277,13 +261,11 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
                 return (
                   <React.Fragment key={item.id}>
                     {/* Place Item Card */}
-                    <div className="relative group bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-3xl p-3.5 sm:p-5 shadow-lg transition-all">
+                    <div className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-3.5 sm:p-4 shadow-sm transition-all">
                       
-                      {/* Left timeline index marker & card contents */}
-                      <div className="flex items-start gap-2.5 sm:gap-4">
-                        
-                        {/* Index marker */}
-                        <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-md shadow-orange-500/25 shrink-0 mt-0.5">
+                      <div className="flex items-start gap-3 sm:gap-4">
+                        {/* Number Index Marker */}
+                        <div className="w-8 h-8 rounded-xl bg-blue-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center shrink-0">
                           {index + 1}
                         </div>
 
@@ -292,7 +274,7 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
                           <img
                             src={place.photoUrl}
                             alt={place?.name || 'Local'}
-                            className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl object-cover shrink-0 border border-slate-800 shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover shrink-0 border border-slate-800 cursor-pointer hover:opacity-90 transition-opacity"
                             onClick={() => place && onSelectPlaceForDetails(place)}
                           />
                         )}
@@ -302,13 +284,13 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
                             <h3
                               onClick={() => place && onSelectPlaceForDetails(place)}
-                              className="text-sm sm:text-base font-bold text-white hover:text-orange-400 cursor-pointer transition-colors truncate"
+                              className="text-sm sm:text-base font-semibold text-white hover:text-blue-400 cursor-pointer transition-colors truncate"
                             >
                               {place?.name || 'Local não encontrado'}
                             </h3>
 
                             {/* Time Slot input */}
-                            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
+                            <div className="flex items-center gap-1 text-xs text-slate-400">
                               <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                               <input
                                 type="time"
@@ -316,20 +298,18 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
                                 onChange={e =>
                                   updateItineraryItem(currentDay.id, item.id, { startTime: e.target.value })
                                 }
-                                placeholder="Horário"
-                                className="bg-slate-950/80 border border-slate-800 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-orange-500"
+                                className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
                               />
                             </div>
                           </div>
 
-                          <p className="text-[11px] sm:text-xs text-slate-400 flex items-center gap-1 mb-1.5 truncate">
-                            <MapPin className="w-3 h-3 text-orange-400 shrink-0" />
-                            <span className="truncate">{place?.neighborhood}</span>
+                          <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-2 truncate">
+                            <MapPin className="w-3 h-3 text-blue-400 shrink-0" />
+                            <span>{place?.neighborhood}</span>
                             {place?.metroStation && (
                               <>
                                 <span className="text-slate-600">•</span>
-                                <span className="flex items-center gap-1 text-cyan-400 text-[10px] sm:text-[11px] font-medium truncate">
-                                  <Train className="w-3 h-3 shrink-0" />
+                                <span className="text-cyan-400 text-[11px] truncate">
                                   {place.metroStation}
                                 </span>
                               </>
@@ -342,19 +322,21 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
                               <textarea
                                 value={tempNotes}
                                 onChange={e => setTempNotes(e.target.value)}
-                                placeholder="Ex: Comprar ingresso na bilheteria, almoçar no restaurante..."
-                                className="w-full p-2 bg-slate-950 border border-orange-500/50 rounded-xl text-xs text-white focus:outline-none resize-none"
+                                placeholder="Anotação para esta parada..."
+                                className="w-full p-2 bg-slate-950 border border-blue-500 rounded-xl text-xs text-white focus:outline-none resize-none"
                                 rows={2}
                                 autoFocus
                               />
                               <div className="flex gap-2">
                                 <button
+                                  type="button"
                                   onClick={() => handleSaveNotes(currentDay.id, item.id)}
-                                  className="px-3 py-1 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-bold"
+                                  className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold"
                                 >
                                   Salvar Nota
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => setEditingNotesItemId(null)}
                                   className="px-2 py-1 text-slate-400 hover:text-white text-xs"
                                 >
@@ -368,12 +350,12 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
                                 setEditingNotesItemId(item.id);
                                 setTempNotes(item.notes || '');
                               }}
-                              className="group/note mt-1 p-2 rounded-xl bg-slate-950/50 border border-slate-800/60 hover:border-slate-700 cursor-pointer flex items-center justify-between text-[11px] sm:text-xs text-slate-300"
+                              className="mt-1 p-2 rounded-lg bg-slate-950/50 border border-slate-800/80 hover:border-slate-700 cursor-pointer flex items-center justify-between text-xs text-slate-400"
                             >
                               <p className="line-clamp-1 italic">
-                                {item.notes || 'Clique para adicionar nota nesta parada...'}
+                                {item.notes || 'Clique para adicionar uma anotação ou dica...'}
                               </p>
-                              <Edit2 className="w-3 h-3 text-slate-500 opacity-60 sm:opacity-0 group-hover/note:opacity-100 transition-opacity ml-2 shrink-0" />
+                              <Edit2 className="w-3 h-3 text-slate-500 ml-2 shrink-0" />
                             </div>
                           )}
                         </div>
@@ -382,31 +364,33 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
                         <div className="flex flex-col items-center gap-1 shrink-0">
                           {index > 0 && (
                             <button
+                              type="button"
                               onClick={() => reorderDayItems(currentDay.id, index, index - 1)}
                               title="Mover para cima"
-                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors active:scale-90"
+                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                             >
                               <ChevronUp className="w-4 h-4" />
                             </button>
                           )}
                           {index < populatedItems.length - 1 && (
                             <button
+                              type="button"
                               onClick={() => reorderDayItems(currentDay.id, index, index + 1)}
                               title="Mover para baixo"
-                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors active:scale-90"
+                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                             >
                               <ChevronDown className="w-4 h-4" />
                             </button>
                           )}
                           <button
+                            type="button"
                             onClick={() => removeItemFromDay(currentDay.id, item.id)}
-                            title="Remover parada deste dia"
-                            className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors active:scale-90 mt-1"
+                            title="Remover parada"
+                            className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-
                       </div>
                     </div>
 
@@ -431,20 +415,21 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
           <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
             <button
               onClick={() => setIsAddStopOpen(true)}
-              className="w-full sm:w-auto flex-1 py-3 px-4 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-orange-500/50 text-slate-200 hover:text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+              className="w-full sm:w-auto flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-98"
             >
-              <Plus className="w-4 h-4 text-orange-400" />
-              <span>Adicionar Mais um Ponto ao Roteiro</span>
+              <Plus className="w-4 h-4 text-blue-400" />
+              <span>Adicionar Ponto a Este Dia</span>
             </button>
 
             {itineraryDays.length > 1 && (
               <button
+                type="button"
                 onClick={() => {
                   if (confirm(`Deseja mesmo excluir o ${currentDay.title}?`)) {
                     deleteDay(currentDay.id);
                   }
                 }}
-                className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-slate-900 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/40 text-slate-500 hover:text-rose-400 text-xs font-semibold transition-colors text-center"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/40 text-slate-500 hover:text-rose-400 text-xs font-semibold transition-colors"
               >
                 Excluir este Dia
               </button>
@@ -462,6 +447,97 @@ export const DayPlanner: React.FC<DayPlannerProps> = ({
           onClose={() => setIsAddStopOpen(false)}
           onOpenCreateNewPlace={onOpenCreateNewPlace}
         />
+      )}
+
+      {/* Clean Create New Day Modal (Never cut off on mobile) */}
+      {isAddingNewDay && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-2xl w-full max-w-md h-auto flex flex-col shadow-2xl overflow-hidden">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900 shrink-0">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-blue-400" />
+                  Criar Novo Dia de Roteiro
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Adicione um dia à viagem
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddingNewDay(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form id="new-day-form" onSubmit={handleCreateDay} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Título do Dia *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Dia 1: Chegada, Hotel & Paulista"
+                  value={newDayTitle}
+                  onChange={e => setNewDayTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Data do Dia *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={newDayDate}
+                  onChange={e => setNewDayDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Descrição (opcional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Museus de manhã e restaurante à noite"
+                  value={newDayDescription}
+                  onChange={e => setNewDayDescription(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </form>
+
+            {/* Pinned Sticky Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0 flex items-center justify-end gap-3 pb-safe">
+              <button
+                type="button"
+                onClick={() => setIsAddingNewDay(false)}
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                form="new-day-form"
+                className="flex-1 sm:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-transform active:scale-95"
+              >
+                Salvar Dia
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
 
     </div>
