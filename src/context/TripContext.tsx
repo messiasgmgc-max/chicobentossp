@@ -37,6 +37,13 @@ export const generateUUID = (): string => {
   });
 };
 
+export const isValidUUID = (str?: string): boolean => {
+  if (!str || typeof str !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+};
+
+export const DEFAULT_TRIP_ID = '00000000-0000-4000-8000-000000000001';
+
 interface TripContextType {
   trip: Trip;
   places: Place[];
@@ -47,6 +54,8 @@ interface TripContextType {
   isSupabaseConnected: boolean;
   isSyncing: boolean;
   lastSyncTime: Date | null;
+  syncError: string | null;
+  clearSyncError: () => void;
   
   // Trip & Members management
   setCurrentUser: (user: string) => void;
@@ -109,7 +118,18 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Local state initialization with localStorage fallback
   const [trip, setTrip] = useState<Trip>(() => {
     const saved = localStorage.getItem(`${LOCAL_STORAGE_KEY_PREFIX}trip`);
-    return saved ? JSON.parse(saved) : INITIAL_TRIP;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (!isValidUUID(parsed.id)) {
+          parsed.id = DEFAULT_TRIP_ID;
+        }
+        return parsed;
+      } catch {
+        // fallback
+      }
+    }
+    return INITIAL_TRIP;
   });
 
   const [places, setPlaces] = useState<Place[]>(() => {
@@ -138,7 +158,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const { isConfigured: isSupabaseConnected } = getSupabaseConfig();
+
+  const clearSyncError = useCallback(() => {
+    setSyncError(null);
+  }, []);
 
   // Save changes to localStorage
   useEffect(() => {
@@ -195,7 +220,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select('*')
         .limit(1);
 
-      let currentTripId = trip.id;
+      let currentTripId = isValidUUID(trip.id) ? trip.id : DEFAULT_TRIP_ID;
+
       if (!tripErr && remoteTrips && remoteTrips.length > 0) {
         const rTrip = remoteTrips[0];
         currentTripId = rTrip.id;
@@ -219,6 +245,46 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           departureDateTime: rTrip.departure_datetime ?? prev.departureDateTime,
           departureFlight: rTrip.departure_flight ?? prev.departureFlight,
         }));
+        setSyncError(null);
+      } else if (!tripErr && (!remoteTrips || remoteTrips.length === 0)) {
+        // Table exists but is empty! Insert the initial trip with current/default data!
+        const initialPayload = {
+          id: currentTripId,
+          title: trip.title || 'Chico Bento SP 🏙️',
+          description: trip.description || 'Nossa viagem incrível para São Paulo!',
+          start_date: trip.startDate || '2026-10-15',
+          end_date: trip.endDate || '2026-10-19',
+          cover_image: trip.coverImage,
+          hotel_name: trip.hotelName || null,
+          hotel_address: trip.hotelAddress || null,
+          hotel_checkin: trip.hotelCheckin || null,
+          hotel_checkout: trip.hotelCheckout || null,
+          hotel_notes: trip.hotelNotes || null,
+          arrival_airport: trip.arrivalAirport || null,
+          arrival_datetime: trip.arrivalDateTime || null,
+          arrival_flight: trip.arrivalFlight || null,
+          departure_airport: trip.departureAirport || null,
+          departure_datetime: trip.departureDateTime || null,
+          departure_flight: trip.departureFlight || null,
+        };
+        const { data: inserted } = await supabase
+          .from('trips')
+          .insert(initialPayload)
+          .select()
+          .maybeSingle();
+
+        if (inserted) {
+          currentTripId = inserted.id;
+          setTrip(prev => ({ ...prev, id: inserted.id }));
+        }
+        setSyncError(null);
+      } else if (tripErr) {
+        console.warn('Erro ao consultar tabela trips:', tripErr.message);
+        if (tripErr.code === 'PGRST205' || tripErr.message.includes('not found')) {
+          setSyncError('Tabela trips não encontrada no Supabase. Execute o script supabase/complete_setup.sql!');
+        } else if (tripErr.message.includes('column')) {
+          setSyncError('Faltam colunas na tabela trips no Supabase. Execute o script supabase/complete_setup.sql!');
+        }
       }
 
       // 2. Fetch remote members from trip_members table
@@ -349,65 +415,145 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setLastSyncTime(new Date());
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Erro na sincronização com o Supabase:', error);
+      setSyncError(error.message || 'Erro ao sincronizar com o Supabase');
     } finally {
       setIsSyncing(false);
     }
   }, [trip.id]);
 
-  // Run sync once on initial mount
+  // Run sync once on initial mount and on online event
   useEffect(() => {
     syncWithSupabase();
+
+    const handleOnline = () => {
+      console.log('Dispositivo reconectado à internet. Sincronizando com Supabase...');
+      syncWithSupabase();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [syncWithSupabase]);
+
+  // Supabase Realtime Subscription (Sync changes across all connected devices in realtime!)
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('chicobentosp_realtime_channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public' },
+        (payload) => {
+          console.log('Realtime change from Supabase:', payload.table, payload.eventType);
+          syncWithSupabase();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Supabase Realtime ativo e sincronizando entre dispositivos!');
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [syncWithSupabase]);
 
   // Trip & Logistics Actions
   const updateTrip = (tripData: Partial<Trip>) => {
-    setTrip(prev => {
-      const updated = { ...prev, ...tripData };
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        supabase
-          .from('trips')
-          .upsert({
-            id: updated.id,
+    let targetTripId = isValidUUID(trip.id) ? trip.id : DEFAULT_TRIP_ID;
+    const updated = { ...trip, ...tripData, id: targetTripId };
+    setTrip(updated);
+
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      (async () => {
+        try {
+          const { data: remoteTrips } = await supabase.from('trips').select('id').limit(1);
+          if (remoteTrips && remoteTrips.length > 0 && isValidUUID(remoteTrips[0].id)) {
+            targetTripId = remoteTrips[0].id;
+          }
+          await supabase.from('trips').upsert({
+            id: targetTripId,
             title: updated.title,
             description: updated.description,
             start_date: updated.startDate,
             end_date: updated.endDate,
             cover_image: updated.coverImage,
-          })
-          .then();
-      }
-      return updated;
-    });
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' });
+        } catch (err) {
+          console.error('Erro ao atualizar viagem no Supabase:', err);
+        }
+      })();
+    }
   };
 
   const updateTripLogistics = (logistics: Partial<Trip>) => {
-    setTrip(prev => {
-      const updated = { ...prev, ...logistics };
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        supabase
+    let targetTripId = isValidUUID(trip.id) ? trip.id : DEFAULT_TRIP_ID;
+    const updated = { ...trip, ...logistics, id: targetTripId };
+    setTrip(updated);
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      console.warn('Supabase não configurado. Dados salvos apenas localmente.');
+      return;
+    }
+
+    (async () => {
+      try {
+        const { data: remoteTrips } = await supabase.from('trips').select('id').limit(1);
+        if (remoteTrips && remoteTrips.length > 0 && isValidUUID(remoteTrips[0].id)) {
+          targetTripId = remoteTrips[0].id;
+          if (trip.id !== targetTripId) {
+            setTrip(prev => ({ ...prev, id: targetTripId }));
+          }
+        }
+
+        const payload = {
+          id: targetTripId,
+          title: updated.title || 'Chico Bento SP 🏙️',
+          description: updated.description || 'Nossa viagem incrível para São Paulo!',
+          start_date: updated.startDate || '2026-10-15',
+          end_date: updated.endDate || '2026-10-19',
+          cover_image: updated.coverImage || null,
+          hotel_name: updated.hotelName || null,
+          hotel_address: updated.hotelAddress || null,
+          hotel_checkin: updated.hotelCheckin || null,
+          hotel_checkout: updated.hotelCheckout || null,
+          hotel_notes: updated.hotelNotes || null,
+          arrival_airport: updated.arrivalAirport || null,
+          arrival_datetime: updated.arrivalDateTime || null,
+          arrival_flight: updated.arrivalFlight || null,
+          departure_airport: updated.departureAirport || null,
+          departure_datetime: updated.departureDateTime || null,
+          departure_flight: updated.departureFlight || null,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error: upsertErr } = await supabase
           .from('trips')
-          .update({
-            hotel_name: updated.hotelName,
-            hotel_address: updated.hotelAddress,
-            hotel_checkin: updated.hotelCheckin,
-            hotel_checkout: updated.hotelCheckout,
-            hotel_notes: updated.hotelNotes,
-            arrival_airport: updated.arrivalAirport,
-            arrival_datetime: updated.arrivalDateTime,
-            arrival_flight: updated.arrivalFlight,
-            departure_airport: updated.departureAirport,
-            departure_datetime: updated.departureDateTime,
-            departure_flight: updated.departureFlight,
-          })
-          .eq('id', updated.id)
-          .then();
+          .upsert(payload, { onConflict: 'id' });
+
+        if (upsertErr) {
+          console.error('Erro ao salvar logística no Supabase:', upsertErr);
+          if (upsertErr.message.includes('column') || upsertErr.code === 'PGRST204' || upsertErr.code === '42703') {
+            setSyncError('Aviso: A tabela trips no Supabase precisa das colunas de logística. Execute o script supabase/complete_setup.sql!');
+          } else {
+            setSyncError(`Erro Supabase: ${upsertErr.message}`);
+          }
+        } else {
+          setSyncError(null);
+          setLastSyncTime(new Date());
+          console.log('Logística sincronizada com sucesso no Supabase!');
+        }
+      } catch (err: any) {
+        console.error('Falha de conexão com Supabase:', err);
+        setSyncError(err.message || 'Falha de conexão com o Supabase');
       }
-      return updated;
-    });
+    })();
   };
 
   const addParticipant = (name: string) => {
@@ -950,6 +1096,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isSupabaseConnected,
         isSyncing,
         lastSyncTime,
+        syncError,
+        clearSyncError,
         setCurrentUser,
         updateTrip,
         updateTripLogistics,

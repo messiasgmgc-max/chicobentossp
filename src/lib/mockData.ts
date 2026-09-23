@@ -1,7 +1,7 @@
 import { Place, ItineraryDay, TripNote, TripExpense, Trip, SPTransportLine } from '../types';
 
 export const INITIAL_TRIP: Trip = {
-  id: 'trip-chico-bento-sp',
+  id: '00000000-0000-4000-8000-000000000001',
   title: 'Chico Bento SP 🏙️',
   description: 'Nossa viagem incrível para São Paulo!',
   startDate: '2026-10-15',

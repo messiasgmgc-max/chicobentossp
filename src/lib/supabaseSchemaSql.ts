@@ -1,4 +1,4 @@
--- ========================================================================
+export const SUPABASE_COMPLETE_SQL = `-- ========================================================================
 -- CHICO BENTO SP - SETUP COMPLETO E DEFINITIVO PARA O SUPABASE
 -- Execute este script completo no SQL Editor do Supabase (supabase.com)
 -- É 100% seguro e idempotente (não apaga dados existentes de outros apps)
@@ -233,3 +233,4 @@ BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.expenses;
     EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_object THEN NULL; END;
 END $$;
+`;

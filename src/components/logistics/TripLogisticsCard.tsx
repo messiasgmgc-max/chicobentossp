@@ -13,7 +13,10 @@ import {
   X,
   Luggage,
   Hotel,
-  CheckCircle2
+  CheckCircle2,
+  Cloud,
+  WifiOff,
+  AlertTriangle
 } from 'lucide-react';
 import { PlaceAutocompleteInput } from '../common/PlaceAutocompleteInput';
 
@@ -24,7 +27,13 @@ const AIRPORT_PRESETS = [
 ];
 
 export const TripLogisticsCard: React.FC = () => {
-  const { trip, updateTripLogistics, triggerCelebration } = useTrip();
+  const {
+    trip,
+    updateTripLogistics,
+    triggerCelebration,
+    isSupabaseConnected,
+    syncError
+  } = useTrip();
   const [isEditing, setIsEditing] = useState(false);
 
   // Form states
@@ -96,13 +105,24 @@ export const TripLogisticsCard: React.FC = () => {
             <Hotel className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-base font-semibold text-white truncate">
                 Hospedagem & Voos
               </h3>
               {hasAnyLogistics && (
                 <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                   Preenchido
+                </span>
+              )}
+              {isSupabaseConnected ? (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0 flex items-center gap-1" title="Sincronização em nuvem ativa">
+                  <Cloud className="w-3 h-3 text-sky-400" />
+                  Nuvem Supabase
+                </span>
+              ) : (
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0 flex items-center gap-1" title="Salvo apenas neste dispositivo. Conecte o Supabase em Configurações para sincronizar com os outros.">
+                  <WifiOff className="w-3 h-3 text-amber-400" />
+                  Modo Local
                 </span>
               )}
             </div>
@@ -120,6 +140,20 @@ export const TripLogisticsCard: React.FC = () => {
           <span>{hasAnyLogistics ? 'Editar Logística' : 'Cadastrar Hotel e Voos'}</span>
         </button>
       </div>
+
+      {/* Sync Error Alert if schema or permission issue occurs */}
+      {syncError && (
+        <div className="mt-3.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200 flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-amber-300">Atenção na sincronização com Supabase:</p>
+            <p className="mt-0.5 text-slate-300 break-words">{syncError}</p>
+            <p className="mt-1 text-[11px] text-amber-400/90">
+              💡 Abra <strong>Configurações (⚙️ no topo)</strong> e clique em <strong>"Copiar SQL do Supabase"</strong> para colar no SQL Editor do Supabase.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 3 Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3.5">

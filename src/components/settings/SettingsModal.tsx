@@ -5,8 +5,12 @@ import {
   saveSupabaseConfig,
   resetSupabaseClient,
   getGoogleMapsApiKey,
-  saveGoogleMapsApiKey
+  saveGoogleMapsApiKey,
+  getSyncShareUrl,
+  checkSupabaseHealth,
+  SupabaseHealthCheck
 } from '../../lib/supabase';
+import { SUPABASE_COMPLETE_SQL } from '../../lib/supabaseSchemaSql';
 import {
   X,
   Database,
@@ -20,7 +24,10 @@ import {
   Trash2,
   Key,
   Globe,
-  Sparkles
+  Sparkles,
+  AlertTriangle,
+  Laptop,
+  Code
 } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -37,7 +44,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     expenses,
     syncWithSupabase,
     isSyncing,
-    resetToDefaultSPData
+    resetToDefaultSPData,
+    syncError,
+    clearSyncError
   } = useTrip();
 
   const currentConfig = getSupabaseConfig();
@@ -48,9 +57,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [gmapsKey, setGmapsKey] = useState(currentGmapsKey);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
+  const [copiedSyncUrl, setCopiedSyncUrl] = useState(false);
   const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
+  const [healthStatus, setHealthStatus] = useState<SupabaseHealthCheck | null>(null);
+  const [checkingHealth, setCheckingHealth] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleTestConnection = async () => {
+    setCheckingHealth(true);
+    const result = await checkSupabaseHealth();
+    setHealthStatus(result);
+    setCheckingHealth(false);
+  };
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(SUPABASE_COMPLETE_SQL);
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 2500);
+  };
+
+  const handleCopySyncLink = () => {
+    const shareUrl = getSyncShareUrl();
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl);
+      setCopiedSyncUrl(true);
+      setTimeout(() => setCopiedSyncUrl(false), 2500);
+    }
+  };
 
   const handleSaveConfigs = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +92,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     saveGoogleMapsApiKey(gmapsKey);
     resetSupabaseClient();
     setSavedSuccess(true);
+    if (clearSyncError) clearSyncError();
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
@@ -166,6 +201,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             )}
           </div>
 
+          {/* Sync Error Alert Banner */}
+          {syncError && (
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-xs space-y-1">
+                <p className="font-semibold text-amber-300">Atenção na Sincronização do Supabase:</p>
+                <p className="text-amber-200/90">{syncError}</p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Se faltam tabelas ou colunas (como aeroportos), copie o script SQL abaixo e execute no SQL Editor do Supabase!
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Form */}
           <form id="settings-form" onSubmit={handleSaveConfigs} className="space-y-4">
             <div>
@@ -218,6 +267,68 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </p>
             )}
           </form>
+
+          {/* Quick Actions for Sync and SQL */}
+          <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+            <h4 className="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
+              <Code className="w-4 h-4 text-blue-400" />
+              Script do Banco de Dados & Conexão
+            </h4>
+            <p className="text-xs text-slate-400">
+              Copie o SQL completo para criar ou atualizar as tabelas do Chico Bento SP (com todas as colunas de aeroporto, voos e hotel):
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleCopySql}
+                className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>{copiedSql ? 'Copiado para a Área de Transferência!' : 'Copiar SQL do Supabase'}</span>
+              </button>
+
+              {currentConfig.isConfigured && (
+                <button
+                  type="button"
+                  onClick={handleCopySyncLink}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all border border-slate-700"
+                >
+                  <Laptop className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{copiedSyncUrl ? 'Link Copiado! Abra no Notebook' : 'Copiar Link p/ Conectar Notebook'}</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleTestConnection}
+                disabled={checkingHealth}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all border border-slate-700"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-blue-400 ${checkingHealth ? 'animate-spin' : ''}`} />
+                <span>{checkingHealth ? 'Verificando...' : 'Diagnosticar Banco'}</span>
+              </button>
+            </div>
+
+            {healthStatus && (
+              <div className="mt-3 p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${healthStatus.connected ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                  <span className="font-semibold text-white">
+                    {healthStatus.connected ? 'Conexão Supabase OK' : 'Falha na Conexão'}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-300 space-y-1 pl-4">
+                  <p>• Tabela trips: {healthStatus.hasTripsTable ? '✅ Criada' : '❌ Não encontrada'}</p>
+                  <p>• Colunas de logística (hotel/aeroporto): {healthStatus.hasLogisticsColumns ? '✅ Prontas' : '⚠️ Faltam colunas (execute o SQL)'}</p>
+                  <p>• Tabela trip_members (integrantes): {healthStatus.hasTripMembers ? '✅ Criada' : '⚠️ Não encontrada'}</p>
+                  <p>• Tabela places (locais): {healthStatus.hasPlaces ? '✅ Criada' : '⚠️ Não encontrada'}</p>
+                  {healthStatus.error && (
+                    <p className="text-amber-400 font-medium pt-1">Detalhe: {healthStatus.error}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Export & WhatsApp Share */}
           <div className="pt-4 border-t border-slate-800 space-y-3">
