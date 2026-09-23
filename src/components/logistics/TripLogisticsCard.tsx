@@ -15,6 +15,7 @@ import {
   Hotel,
   CheckCircle2
 } from 'lucide-react';
+import { PlaceAutocompleteInput } from '../common/PlaceAutocompleteInput';
 
 const AIRPORT_PRESETS = [
   { code: 'CGH', name: 'Aeroporto de Congonhas (CGH) - Zona Sul' },
@@ -310,15 +311,15 @@ export const TripLogisticsCard: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-slate-300 mb-1">
-                      Nome do Hotel ou Airbnb
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Ibis Paulista, Flat Jardins, Airbnb..."
+                    <PlaceAutocompleteInput
+                      label="Nome do Hotel ou Airbnb"
+                      placeholder="Buscar hotel, pousada ou endereço (ex: Ibis Paulista, Tivoli, Fasano...)"
                       value={hotelName}
-                      onChange={e => setHotelName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                      onChange={val => setHotelName(val)}
+                      onSelectPlace={place => {
+                        setHotelName(place.name);
+                        setHotelAddress(place.formattedAddress);
+                      }}
                     />
                   </div>
 

@@ -19,8 +19,14 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('itinerary');
   const [selectedPlaceForDetails, setSelectedPlaceForDetails] = useState<Place | null>(null);
   const [isAddPlaceModalOpen, setIsAddPlaceModalOpen] = useState(false);
+  const [addPlaceInitialQuery, setAddPlaceInitialQuery] = useState('');
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isUserSelectModalOpen, setIsUserSelectModalOpen] = useState(false);
+
+  const handleOpenAddPlace = (initialQuery?: string) => {
+    setAddPlaceInitialQuery(initialQuery || '');
+    setIsAddPlaceModalOpen(true);
+  };
 
   const handleOpenPlaceDetails = (place: Place) => {
     setSelectedPlaceForDetails(place);
@@ -39,7 +45,7 @@ const AppContent: React.FC = () => {
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenAddPlace={() => setIsAddPlaceModalOpen(true)}
+        onOpenAddPlace={() => handleOpenAddPlace()}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenUserSelect={() => setIsUserSelectModalOpen(true)}
       />
@@ -48,7 +54,7 @@ const AppContent: React.FC = () => {
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
         {activeTab === 'itinerary' && (
           <DayPlanner
-            onOpenCreateNewPlace={() => setIsAddPlaceModalOpen(true)}
+            onOpenCreateNewPlace={handleOpenAddPlace}
             onSelectPlaceForDetails={handleOpenPlaceDetails}
           />
         )}
@@ -56,7 +62,7 @@ const AppContent: React.FC = () => {
         {activeTab === 'places' && (
           <PlacesCatalog
             onOpenDetails={handleOpenPlaceDetails}
-            onOpenAddPlace={() => setIsAddPlaceModalOpen(true)}
+            onOpenAddPlace={handleOpenAddPlace}
             onQuickAddToDay={handleQuickAddToDay}
           />
         )}
@@ -88,7 +94,11 @@ const AppContent: React.FC = () => {
       {/* Add Custom Place Modal */}
       <AddPlaceModal
         isOpen={isAddPlaceModalOpen}
-        onClose={() => setIsAddPlaceModalOpen(false)}
+        onClose={() => {
+          setIsAddPlaceModalOpen(false);
+          setAddPlaceInitialQuery('');
+        }}
+        initialQuery={addPlaceInitialQuery}
       />
 
       {/* Settings / Supabase / Google Maps Modal */}

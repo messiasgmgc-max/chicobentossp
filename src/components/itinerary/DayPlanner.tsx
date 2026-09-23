@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 interface DayPlannerProps {
-  onOpenCreateNewPlace: () => void;
+  onOpenCreateNewPlace: (initialQuery?: string) => void;
   onSelectPlaceForDetails: (place: Place) => void;
 }
 

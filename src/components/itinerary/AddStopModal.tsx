@@ -17,7 +17,7 @@ interface AddStopModalProps {
   dayId: string;
   isOpen: boolean;
   onClose: () => void;
-  onOpenCreateNewPlace: () => void;
+  onOpenCreateNewPlace: (initialQuery?: string) => void;
 }
 
 export const AddStopModal: React.FC<AddStopModalProps> = ({
@@ -120,18 +120,20 @@ export const AddStopModal: React.FC<AddStopModalProps> = ({
                   : 'Nenhum local encontrado com esses filtros'}
               </p>
               <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto mb-4">
-                Cadastre os lugares que vocês querem visitar em São Paulo!
+                {searchTerm
+                  ? 'Você pode buscar diretamente no Google Maps e cadastrar esse ponto agora mesmo!'
+                  : 'Cadastre os lugares que vocês querem visitar em São Paulo!'}
               </p>
               <button
                 type="button"
                 onClick={() => {
                   onClose();
-                  onOpenCreateNewPlace();
+                  onOpenCreateNewPlace(searchTerm.trim() || undefined);
                 }}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20 active:scale-95"
               >
                 <Plus className="w-4 h-4" />
-                Cadastrar Novo Ponto
+                <span>{searchTerm ? `Buscar "${searchTerm}" no Maps` : 'Cadastrar Novo Ponto'}</span>
               </button>
             </div>
           ) : (
@@ -194,7 +196,7 @@ export const AddStopModal: React.FC<AddStopModalProps> = ({
             type="button"
             onClick={() => {
               onClose();
-              onOpenCreateNewPlace();
+              onOpenCreateNewPlace(searchTerm.trim() || undefined);
             }}
             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 active:scale-95"
           >

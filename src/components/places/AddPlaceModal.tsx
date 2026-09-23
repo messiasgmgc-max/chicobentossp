@@ -10,12 +10,16 @@ import {
   DollarSign,
   Tag,
   Image as ImageIcon,
-  Sparkles
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
+import { PlaceAutocompleteInput } from '../common/PlaceAutocompleteInput';
+import { PlaceSearchResult } from '../../services/placesSearchService';
 
 interface AddPlaceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialQuery?: string;
 }
 
 const DEFAULT_CATEGORY_PHOTOS: Record<PlaceCategory, string> = {
@@ -42,10 +46,10 @@ const SP_NEIGHBORHOODS: { name: string; lat: number; lng: number }[] = [
   { name: 'Santana (Zona Norte)', lat: -23.504123, lng: -46.621234 },
 ];
 
-export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose }) => {
+export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose, initialQuery = '' }) => {
   const { addPlace, currentUser } = useTrip();
 
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialQuery);
   const [category, setCategory] = useState<PlaceCategory>('gastronomia');
   const [neighborhood, setNeighborhood] = useState('Av. Paulista / Bela Vista');
   const [address, setAddress] = useState('');
@@ -57,8 +61,44 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
   const [tagsInput, setTagsInput] = useState('');
   const [metroStation, setMetroStation] = useState('');
   const [metroLine, setMetroLine] = useState('Linha 2-Verde');
+  const [selectedCoordinates, setSelectedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Update initial query if changed
+  React.useEffect(() => {
+    if (initialQuery) {
+      setName(initialQuery);
+    }
+  }, [initialQuery]);
 
   if (!isOpen) return null;
+
+  const handleSelectPlace = (place: PlaceSearchResult) => {
+    setName(place.name);
+    setAddress(place.formattedAddress);
+    setCategory(place.category);
+    setSelectedCoordinates({ lat: place.lat, lng: place.lng });
+
+    // Match known neighborhood or use detected suburb
+    if (place.neighborhood) {
+      const match = SP_NEIGHBORHOODS.find(
+        n =>
+          n.name.toLowerCase().includes(place.neighborhood.toLowerCase()) ||
+          place.neighborhood.toLowerCase().includes(n.name.toLowerCase().split('/')[0].trim())
+      );
+      if (match) {
+        setNeighborhood(match.name);
+      } else {
+        setNeighborhood(place.neighborhood);
+      }
+    }
+
+    if (place.metroStation) {
+      setMetroStation(place.metroStation);
+      if (place.metroLine) {
+        setMetroLine(place.metroLine);
+      }
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,8 +108,9 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
     const baseLat = neighborhoodObj ? neighborhoodObj.lat : -23.55052;
     const baseLng = neighborhoodObj ? neighborhoodObj.lng : -46.633308;
 
-    const lat = baseLat + (Math.random() - 0.5) * 0.005;
-    const lng = baseLng + (Math.random() - 0.5) * 0.005;
+    // Use REAL coordinates from Google Maps / OSM when selected, otherwise center of neighborhood
+    const finalLat = selectedCoordinates ? selectedCoordinates.lat : baseLat + (Math.random() - 0.5) * 0.005;
+    const finalLng = selectedCoordinates ? selectedCoordinates.lng : baseLng + (Math.random() - 0.5) * 0.005;
 
     const tags = tagsInput
       .split(',')
@@ -81,8 +122,8 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
       category,
       neighborhood,
       address: address.trim() || `${name.trim()}, ${neighborhood}, São Paulo - SP`,
-      lat,
-      lng,
+      lat: finalLat,
+      lng: finalLng,
       description: description.trim() || `Sugestão de lugar em São Paulo (${neighborhood}).`,
       priceLevel,
       rating,
@@ -129,20 +170,45 @@ export const AddPlaceModal: React.FC<AddPlaceModalProps> = ({ isOpen, onClose })
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
         >
-          {/* Place Name */}
+          {/* Place Name with Live Google Maps & OSM Autocomplete */}
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
-              Nome do Local *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ex: Bar dos Arcos, Parque Ibirapuera, Pinacoteca..."
+            <PlaceAutocompleteInput
+              label="Nome do Local ou Endereço *"
+              placeholder="Digite para buscar (ex: Bar Brahma, MASP, Coco Bambu, Rua Augusta 500...)"
               value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              onChange={val => {
+                setName(val);
+                if (selectedCoordinates) {
+                  setSelectedCoordinates(null);
+                }
+              }}
+              onSelectPlace={handleSelectPlace}
+              required
+              autoFocus
             />
           </div>
+
+          {/* Place Verified Badge / Feedback */}
+          {selectedCoordinates && (
+            <div className="p-3 rounded-2xl bg-blue-950/40 border border-blue-500/30 flex items-center justify-between gap-2 text-xs text-blue-200 animate-in fade-in">
+              <div className="flex items-center gap-2 min-w-0">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div className="truncate">
+                  <span className="font-semibold text-white">Local confirmado no Mapa! </span>
+                  <span className="text-[11px] text-blue-300 font-mono">
+                    ({selectedCoordinates.lat.toFixed(4)}, {selectedCoordinates.lng.toFixed(4)})
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCoordinates(null)}
+                className="text-[11px] text-slate-400 hover:text-white underline shrink-0"
+              >
+                Limpar GPS
+              </button>
+            </div>
+          )}
 
           {/* Category & Neighborhood */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
