@@ -28,6 +28,8 @@ ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS arrival_flight TEXT;
 ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS departure_airport TEXT;
 ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS departure_datetime TEXT;
 ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS departure_flight TEXT;
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS hotel_lat NUMERIC;
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS hotel_lng NUMERIC;
 
 -- Inserir ou atualizar a viagem fixa Chico Bento SP com ID padronizado
 INSERT INTO public.trips (

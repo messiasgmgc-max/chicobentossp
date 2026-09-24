@@ -218,33 +218,74 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: remoteTrips, error: tripErr } = await supabase
         .from('trips')
         .select('*')
-        .limit(1);
+        .order('updated_at', { ascending: false })
+        .limit(5);
 
       let currentTripId = isValidUUID(trip.id) ? trip.id : DEFAULT_TRIP_ID;
 
       if (!tripErr && remoteTrips && remoteTrips.length > 0) {
-        const rTrip = remoteTrips[0];
+        // Pick the trip record that has logistics populated, or the most recent one
+        const rTrip = remoteTrips.find((t: any) => t.hotel_name || t.arrival_airport) || remoteTrips[0];
         currentTripId = rTrip.id;
-        setTrip(prev => ({
-          ...prev,
-          id: rTrip.id,
-          title: rTrip.title || prev.title,
-          description: rTrip.description ?? prev.description,
-          startDate: rTrip.start_date || prev.startDate,
-          endDate: rTrip.end_date || prev.endDate,
-          coverImage: rTrip.cover_image || prev.coverImage,
-          hotelName: rTrip.hotel_name ?? prev.hotelName,
-          hotelAddress: rTrip.hotel_address ?? prev.hotelAddress,
-          hotelCheckin: rTrip.hotel_checkin ?? prev.hotelCheckin,
-          hotelCheckout: rTrip.hotel_checkout ?? prev.hotelCheckout,
-          hotelNotes: rTrip.hotel_notes ?? prev.hotelNotes,
-          arrivalAirport: rTrip.arrival_airport ?? prev.arrivalAirport,
-          arrivalDateTime: rTrip.arrival_datetime ?? prev.arrivalDateTime,
-          arrivalFlight: rTrip.arrival_flight ?? prev.arrivalFlight,
-          departureAirport: rTrip.departure_airport ?? prev.departureAirport,
-          departureDateTime: rTrip.departure_datetime ?? prev.departureDateTime,
-          departureFlight: rTrip.departure_flight ?? prev.departureFlight,
-        }));
+
+        setTrip(prev => {
+          const resolvedHotelName = rTrip.hotel_name ?? prev.hotelName;
+          const resolvedHotelAddress = rTrip.hotel_address ?? prev.hotelAddress;
+          const resolvedHotelCheckin = rTrip.hotel_checkin ?? prev.hotelCheckin;
+          const resolvedHotelCheckout = rTrip.hotel_checkout ?? prev.hotelCheckout;
+          const resolvedHotelNotes = rTrip.hotel_notes ?? prev.hotelNotes;
+          const resolvedArrivalAirport = rTrip.arrival_airport ?? prev.arrivalAirport;
+          const resolvedArrivalDateTime = rTrip.arrival_datetime ?? prev.arrivalDateTime;
+          const resolvedArrivalFlight = rTrip.arrival_flight ?? prev.arrivalFlight;
+          const resolvedDepartureAirport = rTrip.departure_airport ?? prev.departureAirport;
+          const resolvedDepartureDateTime = rTrip.departure_datetime ?? prev.departureDateTime;
+          const resolvedDepartureFlight = rTrip.departure_flight ?? prev.departureFlight;
+
+          // If local state had logistics that remote lacked, push local to Supabase now
+          if ((!rTrip.hotel_name && prev.hotelName) || (!rTrip.arrival_airport && prev.arrivalAirport)) {
+            supabase.from('trips').upsert({
+              id: currentTripId,
+              title: prev.title || 'Chico Bento SP 🏙️',
+              description: prev.description || 'Nossa viagem incrível para São Paulo!',
+              start_date: prev.startDate || '2026-10-15',
+              end_date: prev.endDate || '2026-10-19',
+              cover_image: prev.coverImage || null,
+              hotel_name: resolvedHotelName || null,
+              hotel_address: resolvedHotelAddress || null,
+              hotel_checkin: resolvedHotelCheckin || null,
+              hotel_checkout: resolvedHotelCheckout || null,
+              hotel_notes: resolvedHotelNotes || null,
+              arrival_airport: resolvedArrivalAirport || null,
+              arrival_datetime: resolvedArrivalDateTime || null,
+              arrival_flight: resolvedArrivalFlight || null,
+              departure_airport: resolvedDepartureAirport || null,
+              departure_datetime: resolvedDepartureDateTime || null,
+              departure_flight: resolvedDepartureFlight || null,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' }).then(() => console.log('Logística local sincronizada automaticamente com Supabase!'));
+          }
+
+          return {
+            ...prev,
+            id: rTrip.id,
+            title: rTrip.title || prev.title,
+            description: rTrip.description ?? prev.description,
+            startDate: rTrip.start_date || prev.startDate,
+            endDate: rTrip.end_date || prev.endDate,
+            coverImage: rTrip.cover_image || prev.coverImage,
+            hotelName: resolvedHotelName,
+            hotelAddress: resolvedHotelAddress,
+            hotelCheckin: resolvedHotelCheckin,
+            hotelCheckout: resolvedHotelCheckout,
+            hotelNotes: resolvedHotelNotes,
+            arrivalAirport: resolvedArrivalAirport,
+            arrivalDateTime: resolvedArrivalDateTime,
+            arrivalFlight: resolvedArrivalFlight,
+            departureAirport: resolvedDepartureAirport,
+            departureDateTime: resolvedDepartureDateTime,
+            departureFlight: resolvedDepartureFlight,
+          };
+        });
         setSyncError(null);
       } else if (!tripErr && (!remoteTrips || remoteTrips.length === 0)) {
         // Table exists but is empty! Insert the initial trip with current/default data!
@@ -504,7 +545,11 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     (async () => {
       try {
-        const { data: remoteTrips } = await supabase.from('trips').select('id').limit(1);
+        const { data: remoteTrips } = await supabase
+          .from('trips')
+          .select('id')
+          .order('updated_at', { ascending: false })
+          .limit(1);
         if (remoteTrips && remoteTrips.length > 0 && isValidUUID(remoteTrips[0].id)) {
           targetTripId = remoteTrips[0].id;
           if (trip.id !== targetTripId) {
